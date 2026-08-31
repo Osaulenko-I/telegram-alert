@@ -1,0 +1,23 @@
+name: telegram notify
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram message
+        uses: appleboy/telegram-action@v1.0.1
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          disable_web_page_preview: true
+          message: |
+            Push в ${{ github.repository }} (${{ github.ref_name }})
+            Автор: ${{ github.actor }}
+            Сообщение: ${{ env.COMMIT_MSG }}
+            https://github.com/${{ github.repository }}/commit/${{ github.sha }}
