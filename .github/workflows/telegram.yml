@@ -3,21 +3,36 @@ name: telegram notify
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Read last commit
+        id: commit
+        run: |
+          {
+            echo "sha=$(git log -1 --format=%H)"
+            echo "author=$(git log -1 --format=%an)"
+            echo "subject=$(git log -1 --format=%s)"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Send Telegram message
         uses: appleboy/telegram-action@v1.0.1
-        env:
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           disable_web_page_preview: true
           message: |
             Push в ${{ github.repository }} (${{ github.ref_name }})
-            Автор: ${{ github.actor }}
-            Сообщение: ${{ env.COMMIT_MSG }}
-            https://github.com/${{ github.repository }}/commit/${{ github.sha }}
+            Автор: ${{ steps.commit.outputs.author }}
+            Сообщение: ${{ steps.commit.outputs.subject }}
+            https://github.com/${{ github.repository }}/commit/${{ steps.commit.outputs.sha }}
